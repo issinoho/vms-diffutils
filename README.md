@@ -28,7 +28,7 @@ and link test sent to VSI C on the node, and MMS builds the result.
 | VSI C configure answers (identical on both but the CPU) | yes | yes |
 | Builds | yes | yes |
 | Smoke test: identical and different files (statuses), `diff -u`, `cmp`, `diff3` and `diff3 -m`, `sdiff`, `diff -r`, a missing file, no extra version of a redirected `SYS$OUTPUT` | 11/11 | 11/11 |
-| Kit install, smoke test on the installed images, remove | @IA64_IC@ | @X86_IC@ |
+| Kit install, smoke test on the installed images, remove | pending | pending |
 | PCSI kit (`DIFFUTILS`, `V3.12-0E1`) | `ISSINOHO-I64VMS-DIFFUTILS-V0312-0E1-1.PCSI` | `ISSINOHO-X86VMS-DIFFUTILS-V0312-0E1-1.PCSI` |
 
 ## Installing the kit
