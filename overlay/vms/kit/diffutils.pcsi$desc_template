@@ -1,0 +1,36 @@
+--
+-- PCSI product description for GNU diffutils on OpenVMS.
+-- Template: tools/prepare.sh substitutes @PRODUCER@, @BASE@ and @PCSIVERSION@.
+--
+product @PRODUCER@ @BASE@ DIFFUTILS @PCSIVERSION@ full ;
+
+    information RELEASE_NOTES phase after ;
+
+    directory [DIFFUTILS] ;
+    directory [DIFFUTILS.BIN] ;
+    directory [DIFFUTILS.DOC] ;
+
+    file [DIFFUTILS.BIN]CMP.EXE ;
+    file [DIFFUTILS.BIN]DIFF.EXE ;
+    file [DIFFUTILS.BIN]DIFF3.EXE ;
+    file [DIFFUTILS.BIN]SDIFF.EXE ;
+    file [SYS$STARTUP]DIFFUTILS$STARTUP.COM ;
+    file [DIFFUTILS]DIFFUTILS$SETUP.COM ;
+    file [DIFFUTILS.DOC]README.VMS ;
+    file [DIFFUTILS.DOC]COPYING. ;
+    file [DIFFUTILS.DOC]NEWS. ;
+    file [DIFFUTILS.DOC]DIFFUTILS.TXT ;
+    file [DIFFUTILS.DOC]CMP.1 ;
+    file [DIFFUTILS.DOC]DIFF.1 ;
+    file [DIFFUTILS.DOC]DIFF3.1 ;
+    file [DIFFUTILS.DOC]SDIFF.1 ;
+
+    -- Define DIFFUTILS$ROOT now and print the post-installation tasks (PCSI
+    -- shows only the title of an information message unless /HELP is given).
+    execute postinstall "@PCSI$DESTINATION:[SYS$STARTUP]DIFFUTILS$STARTUP.COM INSTALL" interactive ;
+    -- On removal, deassign DIFFUTILS$ROOT.
+    execute install "CONTINUE" remove "@PCSI$DESTINATION:[SYS$STARTUP]DIFFUTILS$STARTUP.COM REMOVE" ;
+
+    information POST_INSTALL phase after ;
+
+end product ;

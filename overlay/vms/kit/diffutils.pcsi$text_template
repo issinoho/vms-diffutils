@@ -1,0 +1,20 @@
+=product @PRODUCER@ @BASE@ DIFFUTILS @PCSIVERSION@ full
+1 'PRODUCER
+=prompt @PRODUCER@
+1 'PRODUCT
+=prompt GNU diffutils @VERSION@ for OpenVMS
+1 'NOTICE
+=prompt GNU diffutils is free software under the GNU General Public License v3 or later.
+1 RELEASE_NOTES
+=prompt Documentation is in [DIFFUTILS.DOC]README.VMS under the installation directory.
+1 POST_INSTALL
+=prompt Post-installation tasks for GNU diffutils
+    At system startup: to define DIFFUTILS$ROOT at every boot, add this line to
+    SYS$MANAGER:SYSTARTUP_VMS.COM:
+    $ @SYS$STARTUP:DIFFUTILS$STARTUP.COM
+    For each user: to define gdiff, cmp, diff3 and sdiff, add this line to
+    LOGIN.COM (add the parameter DIFF to define diff too; it replaces DCL's
+    DIFF abbreviation of DIFFERENCES):
+    $ @DIFFUTILS$ROOT:[000000]DIFFUTILS$SETUP.COM
+
+PRODUCT REMOVE DIFFUTILS removes the product and deassigns DIFFUTILS$ROOT.

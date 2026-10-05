@@ -1,0 +1,77 @@
+GNU diffutils for OpenVMS
+=========================
+
+This is GNU diffutils @VERSION@ (cmp, diff, diff3 and sdiff) built natively
+for OpenVMS @ARCH@, from the unmodified GNU release plus the patches in the
+vms-diffutils project:
+
+    https://github.com/issinoho/vms-diffutils
+
+Kit version: @KITVERSION@.  diffutils is free software under the GNU General
+Public License, version 3 or later; see COPYING.  The manual is
+DIFFUTILS.TXT; CMP.1, DIFF.1, DIFF3.1 and SDIFF.1 are the manual pages.
+
+What is installed
+-----------------
+    DIFFUTILS$ROOT:[BIN]CMP.EXE, DIFF.EXE, DIFF3.EXE, SDIFF.EXE
+    DIFFUTILS$ROOT:[000000]DIFFUTILS$SETUP.COM   defines the commands
+    DIFFUTILS$ROOT:[DOC]                         this file, COPYING, NEWS,
+                                                 DIFFUTILS.TXT, the manual pages
+    SYS$STARTUP:DIFFUTILS$STARTUP.COM            defines DIFFUTILS$ROOT
+
+Setting up
+----------
+The kit installs DIFFUTILS$STARTUP.COM into SYS$STARTUP and runs it once.
+To define DIFFUTILS$ROOT at every boot, the system manager adds this line
+to SYS$MANAGER:SYSTARTUP_VMS.COM:
+
+    $ @SYS$STARTUP:DIFFUTILS$STARTUP.COM
+
+Each user (or SYLOGIN.COM, for everyone) then defines the commands:
+
+    $ @DIFFUTILS$ROOT:[000000]DIFFUTILS$SETUP.COM
+
+This defines gdiff (GNU diff), cmp, diff3 and sdiff.  In DCL, DIFF is an
+abbreviation of the DIFFERENCES command, so diff itself is defined only on
+request:
+
+    $ @DIFFUTILS$ROOT:[000000]DIFFUTILS$SETUP.COM DIFF
+
+after which DIFF runs GNU diff for that user; DIFFERENCES, typed in full,
+still runs the VMS command.
+
+Exit status
+-----------
+Under DCL the status says what happened:
+
+    success     the files are the same
+    warning     the files differ (exit code 1): IF .NOT. $STATUS sees it,
+                but a command procedure's default ON ERROR does not stop
+    error       trouble, such as a missing file (exit code 2)
+
+The exit code N is ($STATUS .AND. %X7F8) / 8.  Under a GNV shell, $? is
+the exit code as on Unix.
+
+diff3 and sdiff
+---------------
+diff3 and sdiff run diff in a subprocess (LIB$SPAWN), with its output in a
+temporary file in SYS$SCRATCH.  By default they run
+DIFFUTILS$ROOT:[BIN]DIFF.EXE; --diff-program names another.  sdiff -o's
+"e" command runs the editor named by the EDITOR logical name or symbol
+(default: EDIT) on a temporary file.
+
+Not available on VMS
+--------------------
+diff -l (--paginate) needs the Unix pr program, which VMS does not have.
+
+Upper-case options and batch jobs
+---------------------------------
+Under the TRADITIONAL DCL parse style DCL upper-cases the unquoted parts of
+a command and the C run-time library passes them to the program in lower
+case, so an unquoted -B (ignore blank lines) arrives as -b (ignore changes
+in white space) and -U 5 as -u 5.  Batch jobs use TRADITIONAL even when
+interactive logins are set to EXTENDED.  Use the long options
+(--ignore-blank-lines), quote the short ones ("-B"), or start the
+procedure with
+
+    $ SET PROCESS/PARSE_STYLE=EXTENDED
