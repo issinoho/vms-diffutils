@@ -1,0 +1,126 @@
+Subject: src/sdiff.c: on OpenVMS, run diff and the editor without fork()
+
+sdiff without -o replaces itself with diff (execvp); with -o it reads
+diff's output through a pipe from fork() or popen(), and its "e" command
+runs the editor through fork() or system() with POSIX shell quoting.
+OpenVMS has no fork() and no exec() without vfork(), and DCL does not
+understand the quoting.  On VMS run diff with vms_spawn_image()
+(vms/vms_spawn.c) with its output in a temporary file: without -o copy it
+to standard output and exit with diff's status, with -o merge from it.
+Run the editor as "EDITOR file" through system() (it needs the terminal);
+the default editor is DCL's EDIT.
+
+--- a/src/sdiff.c	2026-10-05 02:58:48.310949392 +0100
++++ b/src/sdiff.c	2026-10-05 02:59:57.648519028 +0100
+@@ -38,6 +38,9 @@
+ #include <version-etc.h>
+ #include <xalloc.h>
+ #include <xstdopen.h>
++#ifdef __VMS
++# include "vms_spawn.h"
++#endif
+ 
+ /* The official name of this program (e.g., no 'g' prefix).  */
+ static char const PROGRAM_NAME[] = "sdiff";
+@@ -48,7 +51,12 @@
+ /* Size of chunks read from files which must be parsed into lines.  */
+ enum { SDIFF_BUFSIZE = 65536 };
+ 
++#ifdef __VMS
++/* DCL's editor; the EDITOR logical name or variable overrides it.  */
++static char const *editor_program = "EDIT";
++#else
+ static char const *editor_program = DEFAULT_EDITOR_PROGRAM;
++#endif
+ static char const **diffargv;
+ 
+ static char *volatile tmpname;
+@@ -574,8 +582,32 @@
+       diffarg (argv[optind]);
+       diffarg (argv[optind + 1]);
+       diffarg (nullptr);
++#ifdef __VMS
++      /* No exec() without vfork() on VMS: run diff in a subprocess with its
++         output in a temporary file (see vms/vms_spawn.c), copy that to our
++         standard output, and exit with its status.  */
++      {
++        char vms_out[96];
++        vms_temp_name (vms_out, sizeof vms_out, "SDIFF", "OUT");
++        int rc = vms_spawn_image ("SDIFF", diffargv[0], diffargv, "NL:", vms_out);
++        FILE *f = rc < 0 ? nullptr : fopen (vms_out, "r");
++        if (f)
++          {
++            int c;
++            while ((c = getc (f)) != EOF)
++              putchar (c);
++            fclose (f);
++          }
++        vms_delete_all (vms_out);
++        if (rc < 0)
++          perror_fatal (squote (0, diffargv[0]));
++        ck_fflush (stdout);
++        exit (rc);
++      }
++#else
+       execvp (diffargv[0], (char **) diffargv);
+       perror_fatal (squote (0, diffargv[0]));
++#endif
+     }
+   else
+     {
+@@ -602,7 +634,19 @@
+       trapsigs ();
+ 
+       FILE *diffout;
+-#if ! HAVE_WORKING_FORK
++#ifdef __VMS
++      /* Run diff to a temporary file first (see vms/vms_spawn.c); the
++         merge then reads that.  */
++      char vms_out[96];
++      vms_temp_name (vms_out, sizeof vms_out, "SDIFF", "OUT");
++      int vms_rc = vms_spawn_image ("SDIFF", diffargv[0], diffargv, "NL:",
++                                    vms_out);
++      if (vms_rc < 0)
++        perror_fatal (squote (0, diffargv[0]));
++      diffout = fopen (vms_out, "r");
++      if (! diffout)
++        perror_fatal (vms_out);
++#elif ! HAVE_WORKING_FORK
+       {
+         char *command = system_quote_argv (SCI_SYSTEM, (char **) diffargv);
+         errno = 0;
+@@ -664,7 +708,12 @@
+         int wstatus;
+         int werrno = 0;
+ 
+-#if ! HAVE_WORKING_FORK
++#ifdef __VMS
++        ck_fclose (diffout);
++        vms_delete_all (vms_out);
++        /* Encode diff's exit code as a wait status for check_child_status.  */
++        wstatus = vms_rc << 8;
++#elif ! HAVE_WORKING_FORK
+         wstatus = pclose (diffout);
+         if (wstatus == -1)
+           werrno = errno;
+@@ -1003,7 +1052,19 @@
+           char *argv[] = { (char *) editor_program, tmpname, nullptr };
+           int wstatus;
+           int werrno = 0;
+-#if ! HAVE_WORKING_FORK
++#ifdef __VMS
++          /* DCL does not understand the shell quoting of system_quote_argv;
++             run "EDITOR file" (the editor needs the terminal, so system()
++             rather than a subprocess with redirected I/O).  */
++          {
++            char *command = xmalloc (strlen (editor_program)
++                                     + strlen (tmpname) + 2);
++            sprintf (command, "%s %s", editor_program, tmpname);
++            int st = system (command);
++            free (command);
++            wstatus = (st & 1) ? 0 : 1 << 8;
++          }
++#elif ! HAVE_WORKING_FORK
+           char *command = system_quote_argv (SCI_SYSTEM, argv);
+           wstatus = system (command);
+           if (wstatus == -1)

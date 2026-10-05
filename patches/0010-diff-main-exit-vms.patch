@@ -1,0 +1,23 @@
+Subject: src/diff.c: on OpenVMS, end main with exit()
+
+diff returns its status from main.  On VMS exit() goes through
+vms_exit() (lib/stdlib.h, patch 0004), which gives DCL a status of the
+right severity (success, warning for "files differ", error for trouble);
+a return from main does not, so a missing file looked like success.
+
+--- a/src/diff.c	2026-10-05 04:07:48.969906533 +0100
++++ b/src/diff.c	2026-10-05 04:08:04.980247841 +0100
+@@ -889,7 +889,13 @@
+ 
+   check_stdout ();
+   cleanup_signal_handlers ();
++#ifdef __VMS
++  /* exit (lib/stdlib.h) gives DCL a status of the right severity; a
++     return from main would not.  */
++  exit (exit_status);
++#else
+   return exit_status;
++#endif
+ }
+ 
+ /* Append to REGLIST the regexp PATTERN.  */

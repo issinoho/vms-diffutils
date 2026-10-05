@@ -1,0 +1,70 @@
+Subject: src/diff3.c: on OpenVMS, run diff in a subprocess with its output in a file
+
+diff3 runs diff with fork() and a pipe, or with popen() where there is no
+fork().  OpenVMS has no fork(), and its popen() does not understand the
+POSIX shell quoting of system_quote_argv(), and fails when SYS$OUTPUT is
+redirected.  On VMS run diff with vms_spawn_image() (vms/vms_spawn.c: a
+LIB$SPAWN subprocess executing a generated DCL procedure, arguments quoted
+so their case is kept) with its output in a temporary file in SYS$SCRATCH,
+then read that file as the pipe would have been.
+
+--- a/src/diff3.c	2026-10-05 02:58:48.310890585 +0100
++++ b/src/diff3.c	2026-10-05 02:58:58.139161799 +0100
+@@ -43,6 +43,9 @@
+ #include <xalloc.h>
+ #include <xfreopen.h>
+ #include <xstdopen.h>
++#ifdef __VMS
++# include "vms_spawn.h"
++#endif
+ 
+ #include <stdio.h>
+ 
+@@ -1122,7 +1125,24 @@
+   *ap++ = fileb;
+   *ap = nullptr;
+ 
+-#if HAVE_WORKING_FORK
++#ifdef __VMS
++
++  /* No fork() and no working popen() here: run diff in a subprocess with
++     its output in a temporary file, and read that (see vms/vms_spawn.c).  */
++  char vms_out[96];
++  vms_temp_name (vms_out, sizeof vms_out, "DIFF3", "OUT");
++  int vms_rc = vms_spawn_image ("DIFF3", diff_program, argv, "NL:", vms_out);
++  if (vms_rc < 0)
++    {
++      vms_delete_all (vms_out);
++      error (EXIT_TROUBLE, 0, _("subsidiary program %s could not be invoked"),
++             quote (diff_program));
++    }
++  int fd = open (vms_out, O_RDONLY);
++  if (fd < 0)
++    perror_with_exit (vms_out);
++
++#elif HAVE_WORKING_FORK
+ 
+   int fds[2];
+   if (pipe (fds) != 0)
+@@ -1194,6 +1214,13 @@
+ 
+   int werrno = 0;
+   int wstatus;
++#ifdef __VMS
++
++  close (fd);
++  vms_delete_all (vms_out);
++  int status = vms_rc;
++
++#else
+ #if ! HAVE_WORKING_FORK
+ 
+   wstatus = pclose (fpipe);
+@@ -1211,6 +1238,7 @@
+ 
+   int status = (! werrno && WIFEXITED (wstatus)
+                 ? WEXITSTATUS (wstatus) : INT_MAX);
++#endif /* ! __VMS */
+ 
+   if (EXIT_TROUBLE <= status)
+     error (EXIT_TROUBLE, werrno,
