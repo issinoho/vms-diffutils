@@ -4,6 +4,8 @@
 
 # GNU diffutils for OpenVMS
 
+[![Downloads](https://img.shields.io/github/downloads/issinoho/vms-diffutils/total?label=downloads)](https://github.com/issinoho/vms-diffutils/releases)
+
 [GNU diffutils](https://www.gnu.org/software/diffutils/) (**3.12**): `cmp`, `diff`, `diff3` and
 `sdiff`, built natively for OpenVMS on **IA64** and **x86-64**, following diffutils' own releases.
 [GNU patch for OpenVMS](https://github.com/issinoho/vms-patch) applies the diffs it makes. It
