@@ -7,6 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/issinoho/vms-diffutils?label=release)](https://github.com/issinoho/vms-diffutils/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/issinoho/vms-diffutils/total?label=downloads)](https://github.com/issinoho/vms-diffutils/releases)
 ![OpenVMS](https://img.shields.io/badge/OpenVMS-IA64%20%7C%20x86--64-blue)
+[![License](https://img.shields.io/github/license/issinoho/vms-diffutils)](COPYING)
 
 [GNU diffutils](https://www.gnu.org/software/diffutils/) (**3.12**): `cmp`, `diff`, `diff3` and
 `sdiff`, built natively for OpenVMS on **IA64** and **x86-64**, following diffutils' own releases.
