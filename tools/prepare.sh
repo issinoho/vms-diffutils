@@ -157,7 +157,7 @@ subst() {
         -e "s/@PCSIVERSION@/$pcsiversion/g" -e "s/@VERSION@/$UPSTREAM_VERSION/g" \
         -e "s/@KITVERSION@/$kitversion/g" -e "s/@ARCH@/$2/g"
 }
-for base in I64VMS X86VMS; do
+for base in I64VMS X86VMS AXPVMS; do
     subst $base "" < "$kit/diffutils.pcsi\$desc_template" > "$kit/DIFFUTILS-$base.PCSI\$DESC"
     subst $base "" < "$kit/diffutils.pcsi\$text_template" > "$kit/DIFFUTILS-$base.PCSI\$TEXT"
 done
