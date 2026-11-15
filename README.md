@@ -6,11 +6,11 @@
 
 [![Release](https://img.shields.io/github/v/release/issinoho/vms-diffutils?label=release)](https://github.com/issinoho/vms-diffutils/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/issinoho/vms-diffutils/total?label=downloads)](https://github.com/issinoho/vms-diffutils/releases)
-![OpenVMS](https://img.shields.io/badge/OpenVMS-IA64%20%7C%20x86--64-blue)
+![OpenVMS](https://img.shields.io/badge/OpenVMS-IA64%20%7C%20x86--64%20%7C%20Alpha-blue)
 [![License](https://img.shields.io/github/license/issinoho/vms-diffutils)](COPYING)
 
 [GNU diffutils](https://www.gnu.org/software/diffutils/) (**3.12**): `cmp`, `diff`, `diff3` and
-`sdiff`, built natively for OpenVMS on **IA64** and **x86-64**, following diffutils' own releases.
+`sdiff`, built natively for OpenVMS on **IA64**, **x86-64** and **Alpha**, following diffutils' own releases.
 [GNU patch for OpenVMS](https://github.com/issinoho/vms-patch) applies the diffs it makes. It
 belongs to the same family as [GNU grep](https://github.com/issinoho/vms-grep),
 [GNU sed](https://github.com/issinoho/vms-sed), [GNU awk](https://github.com/issinoho/vms-awk),
@@ -39,6 +39,22 @@ and link test sent to VSI C on the node, and MMS builds the result.
 | Smoke test: identical and different files (statuses), `diff -u`, `cmp`, `diff3` and `diff3 -m`, `sdiff`, `diff -r`, a missing file, no extra version of a redirected `SYS$OUTPUT` | 11/11 | 11/11 |
 | Kit install, smoke test on the installed images, remove | clean | clean |
 | PCSI kit (`DIFFUTILS`, `V3.12-0E1`) | `ISSINOHO-I64VMS-DIFFUTILS-V0312-0E1-1.PCSI` | `ISSINOHO-X86VMS-DIFFUTILS-V0312-0E1-1.PCSI` |
+
+**Alpha (v3.12-vms2, a dedicated Alpha release; IA64 and x86-64 stay on vms1):** built on
+OpenVMS Alpha V8.4-2L2 with VSI C V7.4-002 (119 `%CC-I-QUESTCOMPARE` and 6 `QUESTCOMPARE1`
+informational messages, and 38 `%CC-W-UNSUPCONVSPEC` warnings: the compiler says the C RTL does not
+fully support `%td`, which diffutils uses for line numbers; normal, context, ed and
+side-by-side output was checked and is correct); DCL smoke test 11/11; kit
+`ISSINOHO-AXPVMS-DIFFUTILS-V0312-0E2-1.PCSI`. The Alpha shares the IA64-derived `config.h`,
+checked by compiling, linking and preprocessing all 511 test programs of the IA64 configure run
+on the node (same verdict for every one) plus a run-time probe; see
+`overlay/vms/config/vms-manual.site`. diffutils' own test suite needs GNV, which the Alpha node
+does not have, so only the smoke test runs there.
+
+**Requirements:** OpenVMS IA64, x86-64 or Alpha with VSI C and MMS (tested on IA64 V8.4-2L3
+with VSI C 7.4, x86-64 E9.2-4 with VSI C 7.7, and Alpha V8.4-2L2 with VSI C V7.4-002). On the
+host: git, bash, python3, gcc and make, curl, gpg, and ssh/sftp for the automated route. GNV
+for diffutils' own test suite (not available on the Alpha node).
 
 ## Installing the kit
 
@@ -103,9 +119,9 @@ Set up `tools/nodes.conf` as described in
 ```sh
 git clone https://github.com/issinoho/vms-diffutils.git
 cd vms-diffutils
-tools/vms_configure.sh ia64 # VSI C configure run, about an hour (once per release)
+tools/vms_configure.sh ia64 # VSI C configure run, about an hour (once per release; the Alpha reuses the IA64 answers)
 tools/prepare.sh            # fetch + verify, patch, configure with the VSI C answers, MMS lists
-tools/build.sh ia64         # upload, then @[.VMS]BUILD on the node (MMS)
+tools/build.sh ia64         # upload, then @[.VMS]BUILD on the node (MMS); ia64, x86 or alpha (batch job)
 tools/test.sh ia64          # smoke test
 tools/kit.sh ia64           # PCSI kit -> out/kits/
 ```
@@ -114,7 +130,7 @@ tools/kit.sh ia64           # PCSI kit -> out/kits/
 
 1. diffutils' own test suite under GNV, as for grep and sed.
 2. Offer patches 0006, 0007 and 0010 to diffutils, and the gnulib fixes to gnulib.
-3. A port to OpenVMS **Alpha**.
+3. ~~A port to OpenVMS **Alpha**.~~ Done: see Status (Alpha kit, patch level 2).
 
 The family of ports, all for IA64 and x86-64 (MariaDB: x86-64 only), each following its upstream releases:
 

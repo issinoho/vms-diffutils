@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for working in this repository: a port of GNU diffutils to OpenVMS (IA64 and x86-64)
+Guidance for working in this repository: a port of GNU diffutils to OpenVMS (IA64, x86-64 and Alpha)
 that stores only our deltas over the upstream release tarball. It is built with exactly the
 methods of its sibling `~/projects/vms-grep` (github.com/issinoho/vms-grep), and the tools
 are copies of vms-m4's (vms-wget's, grep's, extended). Read README.md first; it describes the workflow and design. This
@@ -46,11 +46,28 @@ file covers the rules and the pitfalls.
 - **`DIFF` abbreviates DCL's DIFFERENCES:** `DIFFUTILS$SETUP.COM` defines `gdiff` and only
   defines `diff` with P1 = DIFF (user decision 2026-10-05).
 
+## Alpha
+
+- `build.sh`/`test.sh`/`kit.sh`/`installcheck.sh` use `vms.sh batch` there (interactive ssh
+  output is unreliable; a batch job starts in the login directory, so each job sets default
+  to the work directory). `vms.sh` is vms-grep's (it retries a command that never started).
+- DCL: compare architecture names with `.EQS.`, never `.EQ.` (integer compare: every name
+  equals every other). `build.com` upper-cases `F$GETSYI("ARCH_NAME")` and accepts ALPHA.
+- The AXPVMS kit has its own README (`README_AXPVMS.VMS`). Patch level 2 is the Alpha kit;
+  the x86-64 and IA64 kits stay on 1.
+- Alpha has no GNV and no Perl: smoke test only (diffutils' upstream suite needs GNV).
+- Configuration: the Alpha uses the shared IA64-derived `config.h`, justified by replaying
+  configure's test programs on the node; see the Alpha note in
+  `overlay/vms/config/vms-manual.site`.
+- The Alpha compiler gives `%CC-W-UNSUPCONVSPEC` (38) for `%td` (line numbers, through
+  `pI`). Harmless: `ptrdiff_t` is 32 bits there, and a probe printed `%td` correctly over
+  the whole 32-bit range, including INT_MIN and a field width (2026-11-15).
+
 ## Commands
 
 ```sh
 tools/prepare.sh                        # always first after changing patches/overlay
-tools/build.sh <ia64|x86> [ALL|CLEAN] [KEEP_GOING]
+tools/build.sh <ia64|x86|alpha> [ALL|CLEAN] [KEEP_GOING]
 tools/test.sh <node>                    # smoke test
 tools/gnvtest.sh x86 [tests...]         # upstream suite (x86 only; ~90 min for all)
 tools/vms.sh <node> dcl '<cmd>' ...     # run DCL; also run/batch/put/get
